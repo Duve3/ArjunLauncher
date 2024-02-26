@@ -1,8 +1,14 @@
+# building dirs
 dist/
 build/
 
+# spec files
 *.spec
 
+# idea dir
 .idea/
+
+# output dir
+output/
 
 .venv/
