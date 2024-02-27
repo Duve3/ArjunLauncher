@@ -12,7 +12,9 @@ def main():
     print("This script will build Arjun Launcher from source. If you have any issues please report them!")
     print("Building...")
 
-    # while I could check, its very difficult because of environments
+    print("Installing pygame via python -m pip")
+    subprocess.run(["python", "-m", "pip", "install", "pygame-ce"])
+
     print("Installing pyinstaller via python -m pip")
     subprocess.run(["python", "-m", "pip", "install", "pyinstaller", "--upgrade"])
 
