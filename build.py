@@ -15,6 +15,9 @@ def main():
     print("Installing pygame via python -m pip")
     subprocess.run(["python", "-m", "pip", "install", "pygame-ce"])
 
+    print("Installing pygame_wrapper via python -m pip")
+    subprocess.run(["python", "-m", "pip", "install", "pygame_wrapper"])
+
     print("Installing pyinstaller via python -m pip")
     subprocess.run(["python", "-m", "pip", "install", "pyinstaller", "--upgrade"])
 
