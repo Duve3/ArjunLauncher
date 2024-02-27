@@ -43,6 +43,7 @@ def main():
 
     print("Build complete!")
     print("Run main.py in the output directory (should be in the same one as this one!")
+    input("Close this window now.")
 
 
 if __name__ == "__main__":
