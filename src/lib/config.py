@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 
-def FindSettingsFile():  # TODO: change this to write it in this file, or be a one time thing (maybe?)
+def FindSettingsFile():  # notTODO: change this to write it in this file, or be a one time thing (maybe?)
     dots = "."
     while True:
         try:

@@ -1,8 +1,7 @@
 """
 build.py
 Builds the Project, using pyinstaller
-REQUIRES:
-- python (version 3.11 or higher)
+Requires python 3.11 or higher, requires python to also be on path.
 """
 import subprocess
 import os
@@ -36,10 +35,11 @@ def main():
         os.mkdir("./output/assets/")
 
     print("Moving assets")
-    shutil.copy("./assets/background.jpg", "./output/assets/background.jpg")
-    shutil.copy("./assets/NunitoSans.ttf", "./output/assets/NunitoSans.ttf")
-    shutil.copy("./assets/Poppins_R.ttf", "./output/assets/Poppins_R.ttf")
-    shutil.copy("./assets/ProtestRiot.ttf", "./output/assets/ProtestRiot.ttf")
+    filenames = next(os.walk("./assets/"), (None, None, []))[2]
+
+    for file in filenames:
+        print(f"Moving {file}")
+        shutil.copy(f"./assets/{file}", f"./output/assets/{file}")
 
     print("Build complete!")
     print("Run main.py in the output directory (should be in the same one as this one!")

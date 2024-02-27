@@ -80,7 +80,7 @@ class Game(menu.MenuType):
 
         self.background = pygame.transform.smoothscale(pygame.image.load(settings.BACKGROUND).convert_alpha(), (800, 600))
 
-        self.starterPosition = [200, 220]
+        self.starterPosition = [100, 400]
 
         self.arjun = Arjun(30, 9.8)  # TODO: find a real air resistance value (and more accurate gravity).
         self.arjun.set_pos(*self.starterPosition)
