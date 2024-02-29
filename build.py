@@ -1,10 +1,12 @@
 """
 build.py
 Builds the Project, using pyinstaller
-Requires python 3.11 or higher, requires python to also be on path.
+Requires python 3.11 or higher, requires python to also be on path
+To avoid checking for updates, run this with -n
 """
 import subprocess
 import os
+import sys
 import shutil
 from update import checkForUpdate
 
