@@ -674,7 +674,7 @@ class CGClock:
         return self._clock.get_rawtime()
 
 
-class CUIGroup(pygame.Surface):
+class CUIGroup:
     """
     Essentially a pygame.Surface that stores objects.
     :param size: Size of the surface.
@@ -685,8 +685,15 @@ class CUIGroup(pygame.Surface):
         if size == (0, 0):
             size = (800, 600)
 
-        super().__init__(size=size, flags=flags)
+        if flags == 0:
+            flags = pygame.SRCALPHA
 
+        self.surface = pygame.Surface(size, flags=flags)
+        self.surface.fill(CUColor((255, 255, 255), 0))
+
+        self.do_rotate = [False, 0]
+
+        self.pos = [0, 0]
         self.objs: list[CUIObject] = []
 
     def add_obj(self, obj: Union[CUIObject, BaseObject]):
@@ -713,8 +720,17 @@ class CUIGroup(pygame.Surface):
         :param screen: A CScreen to draw to.
         :return:
         """
+        self.surface.fill(CUColor((255, 255, 255), 0))
         for obj in self.objs:
-            screen.draw(obj)
+            obj.draw(self.surface)
+
+        if self.do_rotate[0]:
+            surface = pygame.transform.rotate(self.surface, self.do_rotate[1])
+            self.do_rotate = [False, 0]
+        else:
+            surface = self.surface
+
+        screen.draw(surface, self.pos)
 
     def connect_manager(self, manager: CUIManager):
         """
@@ -725,50 +741,13 @@ class CUIGroup(pygame.Surface):
         for obj in self.objs:
             manager.update_object(obj)
 
-    def move(self, x: float, y: float):
+    def rotate(self, degree: float):
         """
-        Moves all the objects within to the position specified.
-        WARN: Bad description, this function most likely does something different than you think!
-        :param float x:
-        :param float y:
-        :return:
+        Rotates the surface within the group.
+        This function works by tasking the rotation to happen later (right before draw call)
+        :param float degree: The angle to rotate by (in degrees).
         """
-        for obj in self.objs:
-            if isinstance(obj, BaseObject):
-                if isinstance(obj, CLine):
-                    obj.start[0] += x
-                    obj.start[1] += y
-                    obj.end[0] += x
-                    obj.end[1] += y
-
-                elif isinstance(obj, CCircle):
-                    obj.center[0] += x
-                    obj.center[1] += y
-
-            elif isinstance(obj, (CRect, CUIObject)):
-                obj.x += x
-                obj.y += y
-
-    def set_pos(self, x: float, y: float):
-        """
-        Sets the exact position of every object within the group to the one given.
-        Does what you probably think the move function does.
-        :param float x:
-        :param float y:
-        :return:
-        """
-        for obj in self.objs:
-            if isinstance(obj, BaseObject):
-                if isinstance(obj, CLine):  # notTODO: this doesnt work (its a line, this brings it to a single point)
-                    obj.set_pos(x, y)
-
-                elif isinstance(obj, CCircle):
-                    obj.center[0] = x
-                    obj.center[1] = y
-
-            elif isinstance(obj, (CRect, CUIObject)):
-                obj.x = x
-                obj.y = y
+        self.do_rotate = [True, degree]
 
 
 class CScreen:
@@ -831,11 +810,11 @@ class CScreen:
 
             obj.draw(self.surface)
 
-        elif isinstance(obj, pygame.Surface):
-            if isinstance(obj, CUIGroup):  # since CUIGroups are surfaces, they will be in here as well.
-                obj.draw(self)
-                return
+        elif isinstance(obj, CUIGroup):  # since CUIGroups are surfaces, they will be in here as well.
+            obj.draw(self)
+            return
 
+        elif isinstance(obj, pygame.Surface):
             if pos is None:
                 raise TypeError("Missing required positional argument, 'pos'! (required for pygame.Surface)")
 

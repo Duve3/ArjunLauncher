@@ -2,28 +2,35 @@ import pygame
 from lib import ui
 from lib import menu
 from lib import config
+import math
 
 
 def build_arjun() -> ui.CUIGroup:
     group = ui.CUIGroup((75, 200))
 
-    group.add_obj(ui.CCircle((10, 10), 20, ui.CUColor.BLACK(), draw_width=10))
+    group.add_obj(ui.CCircle((20, 20), 20, ui.CUColor.BLACK(), draw_width=10))
 
-    group.add_obj(ui.CLine((10, 29), (10, 101), ui.CUColor.BLACK(), width=10))
+    group.add_obj(ui.CLine((20, 39), (20, 111), ui.CUColor.BLACK(), width=10))
 
     return group
 
 
 class Arjun(pygame.Surface):
-    def __init__(self, air_friction, gravity):
+    def __init__(self, air_friction, gravity, ground_friction):
         super().__init__((75, 200))
 
+        # Arjun
         self.arjun = build_arjun()
 
         self.force = [0, 0]
 
+        self.draw_degree = 0
+
         self.gravity = gravity
         self.air_friction = air_friction
+
+        self.hit_ground = False
+        self.ground_friction = ground_friction
 
     def tick(self, dt, camera: ui.CGCamera):
         dt /= 1000  # because its in milliseconds
@@ -31,27 +38,44 @@ class Arjun(pygame.Surface):
         camera.y -= self.force[1] * dt
 
         print(self.force)
-
-        # self.move(self.force[0] * dt, self.force[1] * dt)
         print(self.air_friction)
         print(self.gravity)
         print(dt)
-        self.force[0] -= (self.air_friction * dt)
-        self.force[1] -= (self.gravity * dt)
+
+        # angle calculations
+        try:
+            self.draw_degree = math.degrees(math.atan(self.force[1]/self.force[0])) * 100  # TODO: check math notebook for correct calculations
+        except ZeroDivisionError:
+            self.draw_degree = 0
+        print(self.draw_degree)
+
+        # force calculations
+        self.force[0] -= self.air_friction * dt  # * (self.force[0]/1000) - makes air friction based on velo \n
+        # The above doesn't use air friction based on velo (currently) due to it being either too high or too low
+        # TODO:
+        #  Make force[0] -= self.air_friction * dt and * (self.force[0]/1000) <= the 1000 needs to be tuned to good
+        if not self.hit_ground:
+            self.force[1] -= self.gravity * dt
+        else:
+            if self.force[1] != 0:
+                self.force[1] = 0
+            self.force[0] -= self.ground_friction * dt * (self.force[0] / 100)  # makes ground friction based on velo
 
         if self.force[0] <= 0:
             self.force[0] = 0
 
         # by commenting the following, it allows the character to start going downwards
-        # TODO: make sure to check somewhere else that the character isn't going below ground!
+        # notTODO: make sure to check somewhere else that the character isn't going below ground!
         # if self.force[1] <= 0:
         #     self.force[1] = 0
 
     def move(self, x, y):
-        self.arjun.move(x, y)
+        self.arjun.pos[0] += x
+        self.arjun.pos[1] += y
 
     def set_pos(self, x, y):
-        self.arjun.set_pos(x, y)
+        self.arjun.pos[0] = x
+        self.arjun.pos[1] = y
 
 
 class ModsSidebar(pygame.Surface):
@@ -76,13 +100,23 @@ class Game(menu.MenuType):
         # through a camera that handles where to actually put the objects on the screen based on the current coords.
         self.settings = settings
 
+        self.aboveSurface = pygame.Surface((1000, 600))
+        self.aboveSurface.fill(ui.CUColor((25, 200, 254)))
+
+        self.belowSurface = pygame.Surface((1000, 600))
+        self.belowSurface.fill(ui.CUColor((30, 72, 86)))
+
         self.camera = ui.CGCamera(self.screen)
 
-        self.background = pygame.transform.smoothscale(pygame.image.load(settings.BACKGROUND).convert_alpha(), (800, 600))
+        self.LABEL_coords = ui.CUILabel(660, 60, ui.Font(settings.POPPINS_REGULAR, 20, ui.CUColor.BLACK()),
+                                        "Coordinates:\nx: {0}\ny: {1}".format(self.camera.x, self.camera.y))
+
+        self.background = pygame.transform.smoothscale(pygame.image.load(settings.BACKGROUND).convert_alpha(),
+                                                       (800, 600))
 
         self.starterPosition = [100, 400]
 
-        self.arjun = Arjun(30, 9.8)  # TODO: find a real air resistance value (and more accurate gravity).
+        self.arjun = Arjun(30, 9.8, 60)  # TODO: find a real air resistance value (and more accurate gravity).
         self.arjun.set_pos(*self.starterPosition)
 
         self.SIDEBAR_mods = ModsSidebar()
@@ -95,6 +129,7 @@ class Game(menu.MenuType):
         def stop():
             self.SIDEBAR_mods.show = True
             self.arjun.set_pos(*self.starterPosition)
+            self.arjun.draw_degree = 0
             self.camera.x, self.camera.y = 0, 0
             self.BUTTON_launch.defaultColor = ui.CUColor.GREEN()
             self.BUTTON_launch.pressedColor = ui.CUColor.GREEN().darken(20, retColor=True)
@@ -115,7 +150,7 @@ class Game(menu.MenuType):
             self.BUTTON_launch.pressedColor = ui.CUColor.RED().darken(20, retColor=True)
             self.BUTTON_launch.highlightColor = ui.CUColor.RED().darken(40, retColor=True)
             self.BUTTON_launch.text = "STOP"
-            self.BUTTON_launch.x, self.BUTTON_launch.y = 590, 10
+            self.BUTTON_launch.x, self.BUTTON_launch.y = 690, 10
             self.BUTTON_launch.text_pos = (
                 self.BUTTON_launch.centerx - self.BUTTON_launch.font.get_rect(self.BUTTON_launch.text,
                                                                               size=self.BUTTON_launch.font.size).width // 2,
@@ -124,7 +159,8 @@ class Game(menu.MenuType):
 
             self.BUTTON_launch.func = stop
 
-            self.arjun.force = [200, 30]
+            self.arjun.force = [2500, 50]
+            self.arjun.hit_ground = False
 
         self.BUTTON_launch.func = launch
 
@@ -146,20 +182,18 @@ class Game(menu.MenuType):
                 if event.type == pygame.QUIT:
                     self.screen.close(kill=True)
 
-            # if pygame.key.get_pressed()[pygame.K_w]:
-            #     self.camera.y -= 10
-            #
-            # if pygame.key.get_pressed()[pygame.K_s]:
-            #     self.camera.y += 10
-            #
-            # if pygame.key.get_pressed()[pygame.K_a]:
-            #     self.camera.x -= 10
-            #
-            # if pygame.key.get_pressed()[pygame.K_d]:
-            #     self.camera.x += 10
+            if self.camera.y > 50:
+                self.arjun.hit_ground = True
 
-            self.screen.fill(ui.CUColor.CYAN())
-            self.camera.render(self.background, (0, 0))
+            self.screen.draw(self.aboveSurface, (-100, 0))
+            if self.camera.y > 0:
+                self.screen.draw(self.belowSurface, (-100, 500))
+
+            # background stuff
+            x = (self.camera.x // 800) * 800
+            self.camera.render(self.background, (0 + x, 0))
+            self.camera.render(self.background, (800 + x, 0))
+            self.camera.render(self.background, (1600 + x, 0))
 
             if transition > 0:
                 transition -= 9
@@ -172,9 +206,15 @@ class Game(menu.MenuType):
             else:
                 self.arjun.tick(dt, self.camera)
 
+                # coordinates
+                self.LABEL_coords.text = "Coordinates:\n   x: {0}\n   y: {1}".format(round(self.camera.x),
+                                                                                     round(-self.camera.y))
+                self.screen.draw(self.LABEL_coords)
+
             # always drawn as it is the stop button
             self.screen.draw(self.BUTTON_launch)
 
-            self.screen.draw(self.arjun.arjun)
+            self.arjun.arjun.rotate(self.arjun.draw_degree)
+            self.arjun.arjun.draw(self.screen)
 
             pygame.display.flip()
