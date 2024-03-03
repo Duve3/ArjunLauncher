@@ -3,6 +3,7 @@ from lib import menu
 from lib import ui
 from lib import config
 from game import Game
+from __about__ import __VERSION__
 
 
 class MainMenu(menu.MenuType):
@@ -13,10 +14,13 @@ class MainMenu(menu.MenuType):
         self.transitionEvent = pygame.event.Event(pygame.USEREVENT + 1)
         self.transitionType = pygame.USEREVENT + 1
 
-        self.FONT_title = ui.Font(settings.PROTEST_RIOT, 60, ui.CUColor.WHITE())
+        self.FONT_title = ui.CUIFont(settings.PROTEST_RIOT, 60, ui.CUColor.WHITE())
         self.LABEL_title = ui.CUILabel(self.FONT_title.get_center(self.screen.surface, "Arjun Launcher").x, 100, self.FONT_title, "Arjun Launcher")
 
-        self.FONT_play = ui.Font(settings.POPPINS_REGULAR, 30, ui.CUColor.WHITE())
+        self.FONT_version = ui.CUIFont(settings.POPPINS_REGULAR, 20, ui.CUColor.WHITE())
+        self.LABEL_version = ui.CUILabel(10, 570, self.FONT_version, __VERSION__)
+
+        self.FONT_play = ui.CUIFont(settings.POPPINS_REGULAR, 30, ui.CUColor.WHITE())
         self.BUTTON_play = ui.CUITextButton(400 - 100, 300, 200, 50, ui.CUColor.WHITE().darken(50, retColor=True), self.FONT_play, "PLAY", draw_border_radius=5, onPress=lambda: pygame.event.post(self.transitionEvent))
 
         self.manager = ui.CUIManager(objects=[self.BUTTON_play])
@@ -52,6 +56,7 @@ class MainMenu(menu.MenuType):
             self.screen.fill(ui.CUColor.BLUE().darken(50, retColor=True))
 
             self.screen.draw(self.LABEL_title)
+            self.screen.draw(self.LABEL_version)
             self.screen.draw(self.BUTTON_play)
 
             self.screen.draw(self.darkSurface, (0, 0))

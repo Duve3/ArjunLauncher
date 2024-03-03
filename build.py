@@ -16,7 +16,7 @@ def main():
     print("This script will build Arjun Launcher from source. If you have any issues please report them!")
     print("Building...")
 
-    install = ["requests", "pygame-ce", "pygame_wrapper", "pyinstaller"]
+    install = ["requests", "pygame-ce", "pyinstaller"]  # removed pygame_wrapper, may result in odd results?
     for package in install:
         print(f"Installing {package} using python -m pip (--upgrade)")
         subprocess.run(["python", "-m", "pip", "install", package, "--upgrade"])

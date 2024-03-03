@@ -44,10 +44,16 @@ class Arjun(pygame.Surface):
 
         # angle calculations
         try:
-            self.draw_degree = math.degrees(math.atan(self.force[1]/self.force[0])) * 100  # TODO: check math notebook for correct calculations
+            self.draw_degree = -(math.degrees(math.atan(self.arjun.pos[1] + self.force[1]/self.arjun.pos[0] - self.force[0])) * 1000) % 360
+            # if self.draw_degree > 350 or self.draw_degree < 120:
+            #     self.draw_degree = 350
+            #
+            # elif 180 > self.draw_degree > 120:
+            #     self.draw_degree = 180
+            # TODO:
+            #   (above) still incorrect somehow, rotates in a circle fashion, set max/min?
         except ZeroDivisionError:
             self.draw_degree = 0
-        print(self.draw_degree)
 
         # force calculations
         self.force[0] -= self.air_friction * dt  # * (self.force[0]/1000) - makes air friction based on velo \n
@@ -86,11 +92,12 @@ class ModsSidebar(pygame.Surface):
 
         self.fill(ui.CUColor.GREY().darken(20))  # basically dark gray
 
-        line = ui.CLine((0, 0), (0, 600), color=ui.CUColor.BLACK(), width=5)
-
-        line.draw(self)
+        self.divider = ui.CLine((0, 0), (0, 600), color=ui.CUColor.BLACK(), width=5)
 
         self.manager = ui.CUIManager([])
+
+    def draw(self, screen: ui.CScreen):
+        pass
 
 
 class Game(menu.MenuType):
@@ -108,23 +115,29 @@ class Game(menu.MenuType):
 
         self.camera = ui.CGCamera(self.screen)
 
-        self.LABEL_coords = ui.CUILabel(660, 60, ui.Font(settings.POPPINS_REGULAR, 20, ui.CUColor.BLACK()),
+        self.FONT_coords = ui.CUIFont(settings.POPPINS_REGULAR, 20, ui.CUColor.BLACK())
+        self.LABEL_coords = ui.CUILabel(660, 60, self.FONT_coords,
                                         "Coordinates:\nx: {0}\ny: {1}".format(self.camera.x, self.camera.y))
 
         self.background = pygame.transform.smoothscale(pygame.image.load(settings.BACKGROUND).convert_alpha(),
                                                        (800, 600))
 
-        self.starterPosition = [100, 400]
+        self.starterPosition = [100, 365]
+        self.starterForce = [200, 20]
 
         self.arjun = Arjun(30, 9.8, 60)  # TODO: find a real air resistance value (and more accurate gravity).
         self.arjun.set_pos(*self.starterPosition)
 
         self.SIDEBAR_mods = ModsSidebar()
 
-        self.FONT_launch = ui.Font(self.settings.POPPINS_REGULAR, 20, ui.CUColor.BLACK())
+        self.FONT_launch = ui.CUIFont(self.settings.POPPINS_REGULAR, 20, ui.CUColor.BLACK())
 
         self.BUTTON_launch = ui.CUITextButton(490, 10, 100, 50, ui.CUColor.GREEN(), self.FONT_launch, "LAUNCH",
                                               draw_border_radius=5)
+
+        # debug (never actually used unless enabled, probably will be removed in prod-based builds)
+        self.LABEL_angle = ui.CUILabel(100, 10, self.FONT_coords, "angle: \n{0}".format(self.arjun.draw_degree))
+        self.LABEL_force = ui.CUILabel(100, 200, self.FONT_coords, "force: \n{0}".format(self.arjun.force))
 
         def stop():
             self.SIDEBAR_mods.show = True
@@ -159,7 +172,7 @@ class Game(menu.MenuType):
 
             self.BUTTON_launch.func = stop
 
-            self.arjun.force = [2500, 50]
+            self.arjun.force = self.starterForce
             self.arjun.hit_ground = False
 
         self.BUTTON_launch.func = launch
@@ -182,7 +195,12 @@ class Game(menu.MenuType):
                 if event.type == pygame.QUIT:
                     self.screen.close(kill=True)
 
-            if self.camera.y > 50:
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F1:
+                        self.settings.DEBUG = not self.settings.DEBUG
+                        self.settings.write()
+
+            if self.camera.y >= 50:
                 self.arjun.hit_ground = True
 
             self.screen.draw(self.aboveSurface, (-100, 0))
@@ -210,6 +228,13 @@ class Game(menu.MenuType):
                 self.LABEL_coords.text = "Coordinates:\n   x: {0}\n   y: {1}".format(round(self.camera.x),
                                                                                      round(-self.camera.y))
                 self.screen.draw(self.LABEL_coords)
+
+                if self.settings.DEBUG:
+                    self.LABEL_angle.text = "angle: \n{0}".format(self.arjun.draw_degree)
+                    self.LABEL_force.text = "force: \n{0}".format(self.arjun.force)
+
+                    self.screen.draw(self.LABEL_angle)
+                    self.screen.draw(self.LABEL_force)
 
             # always drawn as it is the stop button
             self.screen.draw(self.BUTTON_launch)

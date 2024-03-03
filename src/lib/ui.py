@@ -6,7 +6,6 @@ Contains UI objects and essentially the entire UI system.
 import pathlib
 import math
 import pygame.freetype
-from pygame_wrapper import Font
 from typing import Sequence, Callable, Tuple, Union, Optional
 
 RGBAOutput = Tuple[int, int, int, int]
@@ -449,7 +448,7 @@ class CUITextButton(CUIButton):
     :param **kwargs: Everything else that should be passed to the CUIObject constructor.
     """
 
-    def __init__(self, x: float, y: float, width: float, height: float, defaultColor: CUColor, font: Font,
+    def __init__(self, x: float, y: float, width: float, height: float, defaultColor: CUColor, font: CUIFont,
                  text: str, pressedColor: CUColor = None,
                  highlightColor: CUColor = None, onPress: Callable = None, **kwargs):
         super().__init__(x, y, width, height, defaultColor, pressedColor, highlightColor, onPress, **kwargs)
@@ -480,7 +479,7 @@ class CUILabel(CUIObject):
     :param String text: The text to put on the screen.
     """
 
-    def __init__(self, x: float, y: float, font: Font, text: str):
+    def __init__(self, x: float, y: float, font: CUIFont, text: str):
         super().__init__(x, y, 1, 1, CUColor((0, 0, 0)))  # bs props since this isn't needed.
         self.font = font
         self.text = text
@@ -513,7 +512,7 @@ class CUITextInput(CUIButton):
     :param int charLimit: The maximum number of characters that can be inputted into the textbox.
     """
 
-    def __init__(self, x: float, y: float, width: float, height: float, defaultColor: CUColor, font: Font,
+    def __init__(self, x: float, y: float, width: float, height: float, defaultColor: CUColor, font: CUIFont,
                  placeholder_text: str, pressedColor: CUColor = None, highlightColor: CUColor = None,
                  charLimit: int = 20):
         super().__init__(x, y, width, height, defaultColor, pressedColor=pressedColor, highlightColor=highlightColor,

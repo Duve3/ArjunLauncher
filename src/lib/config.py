@@ -47,13 +47,15 @@ class Settings(Config):
     Settings object
     """
     template = {
-        "ASSET_DIR": str()  # The path to the assets folder
+        "ASSET_DIR": str(),  # The path to the assets folder
+        "DEBUG": bool()  # whether debug mode enabled.
     }
 
     def __init__(self):
         # bs values, used for type checking
         # ex: self.TOKEN = str() or None
         self.ASSET_DIR = str() or None
+        self.DEBUG = bool() or None
 
         # following set in the main function based on values pulled.
         self.NUNITO_SANS = str()
@@ -65,6 +67,10 @@ class Settings(Config):
 
         # notTODO: technically always wastes one write call on execution, possible fix? (if even worth)
         # ^ not worth.
+
+        # set debug
+        if self.DEBUG is None:
+            self.DEBUG = False
 
         # find asset dir
         if self.ASSET_DIR is None:
@@ -84,12 +90,14 @@ class Settings(Config):
 
             # by using the get thing, we allow it to default incase values do not exist.
             self.ASSET_DIR = data.get("ASSET_DIR", self.ASSET_DIR)
+            self.DEBUG = data.get("DEBUG", self.DEBUG)
 
     def write(self):
         # write data
         with open(SETTINGS_PATH, "w") as sf:
             data = json.dumps({
-                "ASSET_DIR": self.ASSET_DIR
+                "ASSET_DIR": self.ASSET_DIR,
+                "DEBUG": self.DEBUG
             })
 
             sf.write(data)
