@@ -168,7 +168,7 @@ class CUIFont(pygame.freetype.Font):
 
     def multiline_render(self, text: str, fgcolor: Optional[CUColor] = None, bgcolor: Optional[CUColor] = None,
                          style: int = STYLE_DEFAULT, rotation: int = 0, size: float = 0) -> list[
-                         Tuple[pygame.Surface, pygame.rect.Rect]]:
+        Tuple[pygame.Surface, pygame.rect.Rect]]:
         """
         Render a surface containing multiple lines of text.
         :param str text: The text the font is rendering (use \n for next line).
@@ -382,7 +382,7 @@ class CUIButton(CUIObject):
                  pressedColor: CUColor = None, highlightColor: CUColor = None, onPress: Callable = None,
                  **kwargs):
         super().__init__(x, y, width, height, defaultColor, **kwargs)
-        self.defaultColor = defaultColor
+        self._defaultColor = defaultColor
         if pressedColor is None:
             pressedColor = defaultColor.darken(20, retColor=True)
         self.pressedColor = pressedColor
@@ -397,6 +397,16 @@ class CUIButton(CUIObject):
         self.isHovered = False
         if onPress:
             self.func = onPress
+
+    @property
+    def defaultColor(self):
+        return self._defaultColor
+
+    @defaultColor.setter
+    def defaultColor(self, x):
+        self._defaultColor = x
+        self.pressedColor = x.darken(20, retColor=True)
+        self.highlightColor = x.darken(40, retColor=True)
 
     def tick(self, event: pygame.Event, mouse_pos: tuple[int, int]):
         """
@@ -453,7 +463,7 @@ class CUITextButton(CUIButton):
                  highlightColor: CUColor = None, onPress: Callable = None, **kwargs):
         super().__init__(x, y, width, height, defaultColor, pressedColor, highlightColor, onPress, **kwargs)
         self.font = font
-        self.text = text
+        self._text = text
         self.text_pos = (self.centerx - self.font.get_rect(text, size=self.font.size).width // 2,
                          self.centery - self.font.get_rect(text, size=self.font.size).height // 2)
 
@@ -461,6 +471,16 @@ class CUITextButton(CUIButton):
             self.multiline = True
         else:
             self.multiline = False
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, value):
+        self._text = value
+        self.text_pos = (self.centerx - self.font.get_rect(self._text, size=self.font.size).width // 2,
+                         self.centery - self.font.get_rect(self._text, size=self.font.size).height // 2)
 
     def draw(self, screen: pygame.Surface):
         super().draw(screen)
@@ -574,8 +594,21 @@ class CUITextInput(CUIButton):
 
 
 class CUIManager:
-    def __init__(self, objects: list[CUIObject]):
+    """
+    Simple UI manager for objects.
+    :param list[CUIObject] objects: List of UI (CUIObject based) objects.
+    :param bool onSurface: Whether the object is on a surface.
+    :param tuple[float, float] pos: The position of the surface (offset)
+    """
+
+    def __init__(self, objects: list[CUIObject], onSurface: bool = False, pos: tuple[float, float] = None):
         self.ui_objects = objects
+        self.offset = None
+
+        if onSurface:
+            if pos is None:
+                raise TypeError("Missing pos value for onSurface type! (required value!)")
+            self.offset = pos
 
     def add_object(self, obj: CUIObject) -> None:
         """
@@ -598,15 +631,20 @@ class CUIManager:
 
     def remove_object(self, obj: CUIObject) -> None:
         """
-            Remove an object from the current UI objects.
-            :param obj: Any UI object.
-            :return:
-            """
+        Remove an object from the current UI objects.
+        :param obj: Any UI object.
+        :return:
+        """
         if obj in self.ui_objects:
             self.ui_objects.remove(obj)
 
     def tick(self, events: list[pygame.Event]):
         mp = pygame.mouse.get_pos()
+        mp = [mp[0], mp[1]]
+        if self.offset:  # ensures offset is used
+            mp[0] -= self.offset[0]
+            mp[1] -= self.offset[1]
+
         for obj in [obj for obj in self.ui_objects if obj.hasDrawn]:  # redefined to only tick visible objects.
             ne = [event for event in events if
                   event.type in obj.registeredEvents]  # only keeps events that are important.
@@ -614,16 +652,17 @@ class CUIManager:
                 continue
 
             for e in ne:
-                obj.tick(e, mp)
+                obj.tick(e, mp)  # noqa ; tuple[int, int] basically list[int]
 
 
 class CGClock:
+    """
+    Initializes a Custom Game Clock, with FPS preloaded.
+    Due to pygame not allowing subclassing of pygame.time.Clock(), some methods may be missing.
+    :param int fps: The fps value
+    """
+
     def __init__(self, fps: int):
-        """
-        Initializes a Custom Game Clock, with FPS preloaded.
-        Due to pygame not allowing subclassing of pygame.time.Clock(), some methods may be missing.
-        :param int fps: The fps value
-        """
         self._clock = pygame.time.Clock()
         self.fps = fps
 
@@ -849,8 +888,13 @@ class CScreen:
 
 
 class CGCamera:
-    def __init__(self, screen: CScreen):
-        self.screen = screen
+    """
+    A game camera
+    :param pygame.Surface surface: The surface to render to.
+    """
+
+    def __init__(self, surface: pygame.Surface):
+        self.surface = surface
         self._x = 0
         self._y = 0
 
@@ -893,7 +937,7 @@ class CGCamera:
             obj.start[1] -= self.y
             obj.end[1] -= self.y
 
-            self.screen.draw(obj)
+            obj.draw(self.surface)
 
             obj.start = os
             obj.end = oe
@@ -905,7 +949,7 @@ class CGCamera:
             obj.center[0] -= self.x
             obj.center[1] -= self.y
 
-            self.screen.draw(obj)
+            obj.draw(self.surface)
 
             obj.center = oc
             return
@@ -918,7 +962,7 @@ class CGCamera:
             npos[0] -= self.x
             npos[1] -= self.y
 
-            self.screen.draw(obj, npos)
+            self.surface.blit(obj, npos)
             return
 
         # save pos for later restore
@@ -929,7 +973,7 @@ class CGCamera:
         obj.x -= self.x
         obj.y -= self.y
 
-        self.screen.draw(obj)
+        obj.draw(self.surface)
 
         # restore pos
         obj.x = ox

@@ -28,8 +28,9 @@ def main():
     if not os.path.isdir("./output/"):
         os.mkdir("./output/")
 
+    print("Creating settings.json")
     with open("./output/settings.json", "w") as sf:
-        sf.write('{\n"ASSET_DIR":"./assets/"\n}')  # hopefully works?
+        sf.write('{\n"ASSET_DIR":"./assets/"\n, "DEBUG": false}')  # hopefully works?
         sf.truncate()
 
     print("Moving from ./dist/main.exe to ./output/main.exe")

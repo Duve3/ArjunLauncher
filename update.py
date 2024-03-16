@@ -14,10 +14,14 @@ except ImportError:
 
 
 def checkForUpdate():
-    base = "https://nzzd5r-5000.csb.app/"
+    base = "https://nzzd5r-5000.csb.app/"  # doesn't really work until I can get a real API
     print("Checking for update")
 
     newest = requests.get(f"{base}current_version")
+    if newest.status_code != 200:  # we can't risk bugging out because API offline
+        print("Failure to connect to API! Assuming Server is offline!")
+        return
+
     if newest.text != __VERSION__:
         print("Updating to new version.")
         if not os.path.isdir("./temp/"):
