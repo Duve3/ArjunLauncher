@@ -51,7 +51,7 @@ class Arjun(pygame.Surface):
             self.draw_degree = 0
 
         # force calculations
-        self.force[0] -= self.air_friction * dt  # * (self.force[0]/1000) - makes air friction based on velo \n
+        self.force[0] -= self.air_friction * dt  # * (self.force[0] / 1000)  # - makes air friction based on velo \n
         # The above doesn't use air friction based on velo (currently) due to it being either too high or too low
         # TODO:
         #  Make force[0] -= self.air_friction * dt and * (self.force[0]/1000) <= the 1000 needs to be tuned to good
@@ -112,7 +112,8 @@ class Game(menu.MenuType):
         # debug (never actually used unless enabled, probably will be removed in prod-based builds)
         self.LABEL_angle = ui.CUILabel(100, 10, self.FONT_coords, "angle: \n{0}".format(self.arjun.draw_degree))
         self.LABEL_force = ui.CUILabel(100, 200, self.FONT_coords, "force: \n{0}".format(self.arjun.force))
-        self.LABEL_vals = ui.CUILabel(100, 140, self.FONT_coords, "vals: \n{0}: {1}".format("hit_ground", self.arjun.hit_ground))
+        self.LABEL_vals = ui.CUILabel(100, 140, self.FONT_coords,
+                                      "vals: \n{0}: {1}".format("hit_ground", self.arjun.hit_ground))
 
         def stop():
             self.SIDEBAR_mods.show = True
@@ -194,7 +195,8 @@ class Game(menu.MenuType):
                 if self.settings.DEBUG:
                     self.LABEL_angle.text = "angle: \n{0}".format(self.arjun.draw_degree)
                     self.LABEL_force.text = "force: \n{0}".format(self.arjun.force)
-                    self.LABEL_vals.text = "vals: \n{0}: {1}\n{2}: {3}".format("hit_ground", self.arjun.hit_ground, "starter_force", self.starterForce)
+                    self.LABEL_vals.text = "vals: \n{0}: {1}\n{2}: {3}".format("hit_ground", self.arjun.hit_ground,
+                                                                               "starter_force", self.starterForce)
 
                     self.screen.draw(self.LABEL_angle)
                     self.screen.draw(self.LABEL_force)

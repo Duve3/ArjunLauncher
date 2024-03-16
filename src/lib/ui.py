@@ -519,7 +519,7 @@ class CUILabel(CUIObject):
 
 class CUITextInput(CUIButton):
     """
-    A text input.
+    Just a button that records the key presses.
     :param float x: The x position of the object.
     :param float y: The y position of the object.
     :param float width: The width of the object.
@@ -530,11 +530,13 @@ class CUITextInput(CUIButton):
     :param CUColor pressedColor: Optional pressed color, defaults to defaultColor.darken(20)
     :param CUColor highlightColor: Optional highlighted color, defaults to defaultColor.darken(40)
     :param int charLimit: The maximum number of characters that can be inputted into the textbox.
+    :param list allowedKeys: The keys that are allowed to be typed - defaults to all.
+    :param Callable onTextUpdate: The function to call upon the text being updated.
     """
 
     def __init__(self, x: float, y: float, width: float, height: float, defaultColor: CUColor, font: CUIFont,
                  placeholder_text: str, pressedColor: CUColor = None, highlightColor: CUColor = None,
-                 charLimit: int = 20):
+                 charLimit: int = 20, allowedKeys: list = None, onTextUpdate: Callable = None):
         super().__init__(x, y, width, height, defaultColor, pressedColor=pressedColor, highlightColor=highlightColor,
                          draw_width=5, draw_border_radius=5)
 
@@ -547,6 +549,8 @@ class CUITextInput(CUIButton):
         self.registeredEvents = [pygame.MOUSEBUTTONDOWN, pygame.MOUSEMOTION, pygame.KEYDOWN, pygame.KEYUP]
         self.ctrlPressed = False
         self.character_limit = charLimit
+        self.allowed_keys = allowedKeys
+        self.textUpdateFunc = onTextUpdate  # WARN: DO NOT NAME self.func BREAKS BC OF SUPER BUTTON
 
     def tick(self, event: pygame.Event, mouse_pos: tuple[int, int]):
         if event.type == pygame.KEYDOWN and self.isPressed:
@@ -567,8 +571,14 @@ class CUITextInput(CUIButton):
                     del self.history[-1]
 
             elif len(self.text) < self.character_limit:
+                if self.allowed_keys:
+                    if event.unicode not in self.allowed_keys:
+                        return
+
                 self.text += event.unicode
                 self.history.append(self.text)
+
+                self.textUpdateFunc(self.text)
 
             return
 
@@ -582,6 +592,7 @@ class CUITextInput(CUIButton):
 
     def draw(self, screen: pygame.Surface):
         super().draw(screen)
+        self.text = str(self.text)  # str needed :shrug: "well-designed language"
         if len(self.text) <= 0 and not self.isPressed:
             t = self.placeholder_text
             self.placeholder_font.render_to(screen, (
