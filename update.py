@@ -45,7 +45,7 @@ def checkForUpdate():
         shutil.copytree("./temp/ArjunLauncher-master/src", "./src", copy_function=shutil.copyfile, dirs_exist_ok=True)
 
         print("You now have to rerun the build script.")
-        input("Press enter to quit.")
+        input("")
 
 
 if __name__ == "__main__":
