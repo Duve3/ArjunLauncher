@@ -47,7 +47,7 @@ def main():
         shutil.copy(f"./assets/{file}", f"./output/assets/{file}")
 
     print("Build complete!")
-    print("Run main.py in the output directory (should be in the same one as this one!")
+    print("Run main.exe in the output directory (should be in the same one as this one!")
     input("Close this window now.")
 
 
